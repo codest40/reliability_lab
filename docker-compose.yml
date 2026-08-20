@@ -1,0 +1,20 @@
+
+services:
+
+  reciever:
+    build:
+      context: ./reciever
+    ports:
+      - "5000:5000"
+    environment:
+      SAVER_URL: http://saver:5001
+    depends_on:
+      - saver
+
+  saver:
+    build:
+      context: ./saver
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./saver/data.json:/app/data.json
