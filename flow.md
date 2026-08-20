@@ -31,8 +31,14 @@
  │                                             │
  │                 Prometheus                  │
  │                                             │
- │  latency | errors | queue | workers         │Requests
+ │  latency | errors | queue | workers         │
+ │  dependency | retries | rejections | SLO    │
+ │                                             │
+ └─────────────────────────────────────────────┘
+```
+## We measure 
 
+Requests
 
 Errors
 
@@ -51,9 +57,3 @@ Dependency errors
 Retries
 
 Rejected requests
-
- │  dependency | retries | rejections | SLO    │
- │                                             │
- └─────────────────────────────────────────────┘
-```
-## We measure 
