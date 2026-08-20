@@ -37,8 +37,8 @@ def parse_args():
     parser.add_argument(
         "--timeout",
         type=float,
-        default=5,
-        help="Request timeout in seconds (default: 5)"
+        default=10,
+        help="Request timeout in seconds (default: 10)"
     )
 
     return parser.parse_args()
@@ -87,7 +87,7 @@ def main():
     try:
         result = response.json()
     except ValueError as e:
-        print("ERROR: Receiver returned invalid JSON.", e)
+        print("ERROR: ", e)
         print(f"HTTP status: {response.status_code}")
         sys.exit(1)
 

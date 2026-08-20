@@ -74,14 +74,15 @@ def validate_word():
     except Exception as e:
       return ({"msg": f"{e}"}), 500
 
-    if not data or not data["word"]:
+    if not data or "word" not in data:
         return jsonify({
             "error": "word is required",
             "saved": False,
             "source": "saver"
         }), 400
 
-    if data["action"] != "normal":
+    action = data.get("action", "normal")
+    if action != "normal":
       result = failure_control(data["action"])
       if result:
         return jsonify({
@@ -89,7 +90,7 @@ def validate_word():
             "type": result,
             "saved": False,
             "source": "saver"
-        }), 400
+        }), 500
 
 
     word = data["word"]
