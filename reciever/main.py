@@ -1,12 +1,10 @@
 from concurrent.futures import Future
-from queue import Queue
+from queue import Queue, Full
 from threading import Thread
 
 import requests
 from flask import Flask, request, jsonify
-
 from service import submit_note, get_all_notes
-
 
 app = Flask(__name__)
 
@@ -16,7 +14,6 @@ WORKERS = 5
 
 # Maximum number of requests waiting for a worker
 QUEUE_SIZE = 10
-
 work_queue = Queue(maxsize=QUEUE_SIZE)
 
 
@@ -80,8 +77,29 @@ def notes():
 
     future = Future()
 
-    work_queue.put(
-        (submit_note, (data,), future)
+    try:
+        work_queue.put_nowait(
+            (submit_note, (data,), future)
+        )
+
+        #work_queue.put(
+        #    (submit_note, (data,), future)
+        #)
+
+    except Full:
+        return jsonify({
+            "error": "Service A is overloaded",
+            "source": "reciever"
+        }), 503
+
+    print(
+        f"Queue before adding request: "
+        f"{work_queue.qsize()}"
+    )
+
+    print(
+        f"Queue after adding request: "
+        f"{work_queue.qsize()}"
     )
 
     try:
@@ -115,10 +133,16 @@ def all_notes():
 
     future = Future()
 
-    work_queue.put(
-        (get_all_notes, (), future)
-    )
+    try:
+      work_queue.put_nowait(
+          (get_all_notes, (), future)
+      )
 
+    except Full:
+        return jsonify({
+            "error": "Service A is overloaded",
+            "source": "reciever"
+        }), 503
     try:
         response = future.result()
 
