@@ -277,5 +277,111 @@ Reliability trade-offs
 The purpose of the project is to make these concepts observable through
 experiments rather than treating them as purely theoretical SRE concepts.
 
+
+## 11. Two Sources of Latency
+As the system becomes more realistic, latency can come from different parts
+of the request path.
+
+### Queue Waiting
+When all workers are busy, new requests wait in the bounded queue.
+
+```text
+Client
+  ↓
+Service A
+  ↓
+Queue
+  ↓
+Worker
+  ↓
+Service B
+
+Retry Waiting
+
+A request can also spend additional time waiting because Service A retries
+a failed dependency call.
+
+For example:
+
+Attempt 1 → timeout
+    ↓
+Attempt 2 → timeout
+    ↓
+Attempt 3 → success
+
+Each retry can add more time to the original request.
+
+This is retry-related latency.
+
+Combined Effect
+
+A request can experience both:
+
+Queue waiting
+      ↓
+Worker starts
+      ↓
+Service B call
+      ↓
+Timeout
+      ↓
+Retry
+      ↓
+Timeout
+      ↓
+Retry
+      ↓
+Success
+
+Therefore:
+
+Total client-observed latency can include both time spent waiting in
+Service A's queue and time spent retrying Service B.
+So improving one source of latency does not
+necessarily solve the overall latency problem. For example, reducing queue size may reduce queue waiting, while aggressive
+retries can still make requests slow.
+
+```
+
+12. Retry Amplification
+
+Retries can also increase the amount of traffic sent to a struggling
+dependency.
+```
+With:
+
+MAX_RETRIES = 2
+
+one logical request can generate up to:
+
+3 dependency attempts
+
+Therefore:
+
+5 client requests
+      ↓
+up to 15 requests to Service B
+
+If B is already slow or overloaded, immediate retries can make the problem
+worse.
+
+B becomes slow
+    ↓
+A times out
+    ↓
+A retries immediately
+    ↓
+B receives more requests
+    ↓
+B becomes more overloaded
+    ↓
+more timeouts
+    ↓
+more retries
+
+The project intentionally demonstrates this behavior before introducing
+exponential backoff, allowing the effect of retries to be observed directly.
+```
+
 ##
 We used ThreadPoolExec because ThreadPoolExecutor is actually the better production-style abstraction, but we switched to raw Thread because we wanted the queue to be visible and directly controlled for this SRE experiment.

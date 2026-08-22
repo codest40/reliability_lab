@@ -2,5 +2,7 @@
   "python",
   "platform",
   "kubernetes",
-  "reliability"
+  "reliability",
+  "docker",
+  "security"
 ]

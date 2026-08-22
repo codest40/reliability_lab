@@ -7,22 +7,23 @@ URL = "http://localhost:5000/notes"
 
 TOTAL_REQUESTS = 20
 
-
 def send_request(number):
     start = time.time()
-
+    word = "platform"
+    action = "slow"
     try:
         response = requests.post(
             URL,
             json={
-                "word": "platform",
-                "action": "slow"
+                "word": word,
+                "action": action
             },
             timeout=30
         )
 
         elapsed = time.time() - start
-
+        print(f"Action Type: {action}")
+        print(f"response: {response.json()}")
         return {
             "request": number,
             "status": response.status_code,

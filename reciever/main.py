@@ -1,13 +1,12 @@
 from concurrent.futures import Future
 from queue import Queue, Full
 from threading import Thread
-
+import time
 import requests
 from flask import Flask, request, jsonify
-from service import submit_note, get_all_notes
+from service import submit_note, get_all_notes, dependency_state, probe_dependency
 
 app = Flask(__name__)
-
 
 # Service A capacity
 WORKERS = 5
@@ -37,12 +36,20 @@ def worker():
             work_queue.task_done()
 
 
+def dependency_probe_loop():
+    while True:
+        if dependency_state.is_under_pressure():
+          if dependency_state.should_probe():
+              probe_dependency()
+        time.sleep(2)
+
 for _ in range(WORKERS):
     Thread(
         target=worker,
         daemon=True
     ).start()
 
+Thread(target=dependency_probe_loop, daemon=True).start()
 
 @app.get("/")
 def root():
@@ -75,8 +82,13 @@ def notes():
             "source": "reciever"
         }), 400
 
-    future = Future()
+    if dependency_state.is_under_pressure():
+        return jsonify({
+            "error": "Dependency Service B is under pressure",
+            "source": "reciever"
+        }), 503
 
+    future = Future()
     try:
         work_queue.put_nowait(
             (submit_note, (data,), future)
@@ -104,7 +116,6 @@ def notes():
 
     try:
         response = future.result()
-
     except requests.exceptions.Timeout:
         return jsonify({
             "source": "reciever",

@@ -35,10 +35,17 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--timeout",
+        "--timeoutClient",
         type=float,
-        default=10,
+        default=20,
         help="Request timeout in seconds (default: 10)"
+    )
+
+    parser.add_argument(
+        "--timeoutService",
+        type=float,
+        default=5,
+        help="Request timeout in seconds (default: 5)"
     )
 
     return parser.parse_args()
@@ -52,6 +59,7 @@ def main():
     payload = {
         "word": args.message,
         "action": args.action,
+        "timeout": args.timeoutService,
     }
 
     try:
@@ -60,14 +68,14 @@ def main():
           response = requests.get(
               url_get,
               json=payload,
-              timeout=args.timeout
+              timeout=args.timeoutClient
           )
         else:
           url = url_post
           response = requests.post(
               url_post,
               json=payload,
-              timeout=args.timeout
+              timeout=args.timeoutClient
           )
 
     except requests.exceptions.Timeout:
@@ -105,4 +113,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
