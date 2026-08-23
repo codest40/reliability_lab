@@ -30,4 +30,66 @@ circuit opens
 recovery probe
        ↓
 circuit closes
+```
 
+```
+HTTP
+├── requests
+├── duration
+├── errors
+├── responses
+└── in progress
+
+DEPENDENCY
+├── requests
+├── duration
+├── errors
+├── timeouts
+└── connection errors
+
+WORKERS
+├── total
+├── busy
+└── available
+
+QUEUES
+├── size
+├── capacity
+├── utilization
+├── rejections
+└── wait duration
+
+RETRIES
+├── retries
+├── attempts
+├── exhausted
+└── delay
+
+CIRCUIT BREAKER
+├── state
+├── transitions
+├── rejections
+├── opens
+├── probes
+├── probe success
+└── probe failure
+
+PROBES
+├── total
+├── success
+├── failure
+└── duration
+
+BULKHEAD
+├── capacity
+├── active requests
+└── rejections
+
+DEPENDENCY HEALTH
+├── health
+└── under pressure
+
+APPLICATION
+├── processed
+├── saved
+└── invalid
