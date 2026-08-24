@@ -1,0 +1,964 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+
+    {
+      "type": "row",
+      "title": "SERVICE LEVEL OVERVIEW",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "collapsed": false,
+      "panels": []
+    },
+
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Availability SLI",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+         "expr": "100 * sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\",status=~\"2..|4..\"}[30m])) / sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\"}[30m]))",
+         "legendFormat": "Availability",
+         "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 3,
+          "noValue": "N/A",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null
+              },
+              {
+                "value": 99
+              },
+              {
+                "value": 99.9
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Availability SLO",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "99.9",
+          "legendFormat": "SLO",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 3
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Error Budget Remaining",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - ((sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\",status=~\"5..\"}[30m])) / sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\"}[30m]))) / (1 - 0.999)))",
+          "legendFormat": "Budget Remaining",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "noValue": "N/A"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Current Error Rate",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "100 * sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\",status=~\"5..\"}[30m])) / sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\"}[30m]))",
+          "legendFormat": "Errors",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 3,
+          "noValue": "N/A"
+        },
+        "overrides": []
+      }
+    },
+
+
+    {
+      "type": "row",
+      "title": "TRAFFIC AND ERRORS",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "collapsed": false,
+      "panels": []
+    },
+
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Request Rate",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (method, endpoint) (rate(http_requests_total[5m]))",
+          "legendFormat": "{{method}} {{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Error Rate %",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "100 * sum by (method, endpoint) (rate(http_requests_errors_total[5m])) / clamp_min(sum by (method, endpoint) (rate(http_requests_total[5m])), 0.000001)",
+          "legendFormat": "{{method}} {{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+
+
+    {
+      "type": "row",
+      "title": "LATENCY SLI",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "collapsed": false,
+      "panels": []
+    },
+
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "HTTP p95 Latency",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p95",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "HTTP p99 Latency",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p99",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Latency SLI < 2s",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 25
+      },
+      "targets": [
+        {
+          "expr": "100 * sum(rate(http_request_duration_seconds_bucket{le=\"2\"}[30m])) / clamp_min(sum(rate(http_request_duration_seconds_count[30m])), 0.000001)",
+          "legendFormat": "< 2s",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 3
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Latency SLO",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 25
+      },
+      "targets": [
+        {
+          "expr": "99",
+          "legendFormat": "SLO",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Latency Error Budget Remaining",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 25
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - ((1 - (sum(rate(http_request_duration_seconds_bucket{le=\"2\"}[30m])) / clamp_min(sum(rate(http_request_duration_seconds_count[30m])), 0.000001))) / (1 - 0.99)))",
+          "legendFormat": "Budget Remaining",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2
+        },
+        "overrides": []
+      }
+    },
+
+
+    {
+      "type": "row",
+      "title": "ERROR BUDGET AND BURN",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "collapsed": false,
+      "panels": []
+    },
+
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Error Budget Consumption",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "targets": [
+        {
+          "expr": "100 * ((sum(rate(http_requests_errors_total[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.000001)) / (1 - 0.999))",
+          "legendFormat": "Budget Consumed %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Error Budget Burn Rate",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "targets": [
+        {
+          "expr": "(sum(rate(http_requests_errors_total[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.000001)) / (1 - 0.999)",
+          "legendFormat": "5m burn rate",
+          "refId": "A"
+        },
+        {
+          "expr": "(sum(rate(http_requests_errors_total[1h])) / clamp_min(sum(rate(http_requests_total[1h])), 0.000001)) / (1 - 0.999)",
+          "legendFormat": "1h burn rate",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+
+
+    {
+      "type": "row",
+      "title": "DEPENDENCY SERVICE LEVEL",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 40
+      },
+      "collapsed": false,
+      "panels": []
+    },
+
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Dependency Request Rate",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 41
+      },
+      "targets": [
+        {
+          "expr": "sum by (operation) (rate(dependency_requests_total[5m]))",
+          "legendFormat": "{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Dependency Error Rate %",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 41
+      },
+      "targets": [
+        {
+          "expr": "100 * sum by (operation) (rate(dependency_errors_total[5m])) / clamp_min(sum by (operation) (rate(dependency_requests_total[5m])), 0.000001)",
+          "legendFormat": "{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Dependency p95 Latency",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 41
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, operation) (rate(dependency_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+
+
+    {
+      "type": "row",
+      "title": "DEPENDENCY FAILURE MODES",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 49
+      },
+      "collapsed": false,
+      "panels": []
+    },
+
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Dependency Timeouts",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 50
+      },
+      "targets": [
+        {
+          "expr": "sum by (operation) (rate(dependency_timeouts_total[5m]))",
+          "legendFormat": "{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "Dependency Connection Errors",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 50
+      },
+      "targets": [
+        {
+          "expr": "sum by (operation) (rate(dependency_connections_errors_total[5m]))",
+          "legendFormat": "{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "Dependency Probe Failures",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 50
+      },
+      "targets": [
+        {
+          "expr": "sum by (dependency) (rate(dependency_probe_failure_total[5m]))",
+          "legendFormat": "{{dependency}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+
+
+    {
+      "type": "row",
+      "title": "RELIABILITY HEALTH",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 58
+      },
+      "collapsed": false,
+      "panels": []
+    },
+
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Dependency Health",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 59
+      },
+      "targets": [
+        {
+          "expr": "dependency_health",
+          "legendFormat": "{{dependency}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "UNHEALTHY"
+                },
+                "1": {
+                  "text": "HEALTHY"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "Dependency Pressure",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 59
+      },
+      "targets": [
+        {
+          "expr": "dependency_under_pressure",
+          "legendFormat": "{{dependency}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NORMAL"
+                },
+                "1": {
+                  "text": "UNDER PRESSURE"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Circuit Breaker State",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 59
+      },
+      "targets": [
+        {
+          "expr": "circuit_breaker_state",
+          "legendFormat": "{{dependency}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "CLOSED"
+                },
+                "1": {
+                  "text": "OPEN"
+                },
+                "2": {
+                  "text": "HALF_OPEN"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "Circuit Breaker Rejections",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 59
+      },
+      "targets": [
+        {
+          "expr": "sum by (dependency) (rate(circuit_breaker_rejections_total[5m]))",
+          "legendFormat": "{{dependency}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+
+
+    {
+      "type": "row",
+      "title": "RETRY IMPACT",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 65
+      },
+      "collapsed": false,
+      "panels": []
+    },
+
+    {
+      "id": 24,
+      "type": "timeseries",
+      "title": "Retry Rate",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 66
+      },
+      "targets": [
+        {
+          "expr": "sum by (operation) (rate(retries_total[5m]))",
+          "legendFormat": "{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "Retry Exhaustion Rate",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 66
+      },
+      "targets": [
+        {
+          "expr": "sum by (operation) (rate(retry_exhausted_total[5m]))",
+          "legendFormat": "{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 26,
+      "type": "timeseries",
+      "title": "Retry Delay p95",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 66
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, operation) (rate(retry_delay_seconds_bucket[5m])))",
+          "legendFormat": "{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+
+
+    {
+      "type": "row",
+      "title": "SLO INTERPRETATION",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 74
+      },
+      "collapsed": false,
+      "panels": []
+    },
+
+    {
+      "id": 27,
+      "type": "stat",
+      "title": "Availability Error Budget",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 75
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - 0.999)",
+          "legendFormat": "Allowed Error %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 3
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 28,
+      "type": "stat",
+      "title": "Latency Error Budget",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 75
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - 0.99)",
+          "legendFormat": "Allowed Slow %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 29,
+      "type": "stat",
+      "title": "Requests Processed",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 75
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\"}[30m]))",
+          "legendFormat": "Requests",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0"
+        },
+        "overrides": []
+      }
+    }
+
+  ],
+
+  "refresh": "5s",
+
+  "schemaVersion": 39,
+
+  "tags": [
+    "sre",
+    "service-level",
+    "sli",
+    "slo",
+    "error-budget",
+    "prometheus",
+    "grafana"
+  ],
+
+  "templating": {
+    "list": []
+  },
+
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+
+  "title": "SRE Service Level",
+  "uid": "sre-service-level",
+  "version": 1
+}

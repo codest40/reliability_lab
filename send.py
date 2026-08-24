@@ -4,10 +4,7 @@ import sys
 import requests
 
 
-# ============================================================
-# ARGUMENTS
-# ============================================================
-
+# Argumentss
 def parse_args():
 
     parser = argparse.ArgumentParser(
@@ -61,17 +58,14 @@ def parse_args():
         "--timeoutService",
         type=float,
         default=5,
-        help="Service B timeout in seconds",
+        help="Service A timeout in seconds",
     )
 
 
     return parser.parse_args()
 
 
-# ============================================================
-# MAIN
-# ============================================================
-
+# MAIN Function
 def main():
 
     args = parse_args()

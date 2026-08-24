@@ -11,14 +11,10 @@ TOTAL_REQUESTS = 20
 def send_request(number):
 
     start = time.time()
-
     word = "platform"
-
     action = "slow"
 
-
     try:
-
         response = requests.post(
             URL,
             json={
@@ -137,5 +133,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

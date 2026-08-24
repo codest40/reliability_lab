@@ -4,25 +4,11 @@ from threading import Thread
 import time
 
 import requests
+from flask import ( Flask, request, jsonify )
+from prometheus_client import ( generate_latest, CONTENT_TYPE_LATEST )
 
-from flask import (
-    Flask,
-    request,
-    jsonify,
-)
-
-from prometheus_client import (
-    generate_latest,
-    CONTENT_TYPE_LATEST,
-)
-
-from service import (
-    submit_note,
-    get_all_notes,
-    dependency_state,
-    probe_dependency,
-    States,
-)
+from service import ( submit_note, get_all_notes, dependency_state,
+                     probe_dependency, States, create_conn_error )
 
 from metrics import (
     REGISTRY,
@@ -50,24 +36,21 @@ from metrics import (
     bulkhead_active_requests,
     bulkhead_rejections_total,
 
+    # Circuit Breaker
+    circuit_breaker_rejections_total,
+
     # Application
     notes_processed_total,
 )
 
-
 app = Flask(__name__)
-
 
 # ============================================================
 # BULKHEAD CONFIGURATION
 # ============================================================
-
 NOTES_WORKERS = 4
-
 ALL_NOTES_WORKERS = 1
-
 NOTES_QUEUE_SIZE = 10
-
 ALL_NOTES_QUEUE_SIZE = 10
 
 
@@ -159,7 +142,6 @@ bulkhead_active_requests.labels(
 # ============================================================
 # QUEUE METRIC HELPER
 # ============================================================
-
 def update_queue_metrics(
     queue,
     queue_name,
@@ -356,8 +338,7 @@ def metrics():
 
 @app.get("/")
 def root():
-
-    return "WELCOME TO RECIEVER APP"
+    return "WELCOME TO RECIEVER SERVICE"
 
 
 @app.get("/favicon.ico")
@@ -814,11 +795,12 @@ def all_notes():
             endpoint=endpoint,
         ).dec()
 
+@app.get("/conn_error")
+def conn_error():
+  create_conn_error()
 
 # ============================================================
 # START SERVICE
-# ============================================================
-
 if __name__ == "__main__":
 
     app.run(

@@ -3,7 +3,16 @@
 echo "STARTING...."
 
 
+usage() {
+    echo "USAGE: ./start cache|no-cache|clean" && exit 1
+}
+
 start() {
+  a=$1
+  if [[ -z "$a" ]]; then
+    usage
+  fi
+
   local arg="${1:-cache}"
 
   if [[ "$arg" == "no-cache" ]]; then
@@ -13,9 +22,12 @@ start() {
   elif [[ "$arg" == "clean" ]]; then
     echo "Cleaning unused build cache..."
     docker builder prune -af
-  else
+  elif [[ "$arg" == "cache" ]]; then
     echo "Cache Build"
     docker compose up --build
+  else
+    echo "$arg is NOT recognixed"
+    usage
   fi
 }
 

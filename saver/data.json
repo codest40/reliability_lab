@@ -4,5 +4,8 @@
   "kubernetes",
   "reliability",
   "docker",
-  "security"
+  "security",
+  "database",
+  "server",
+  "linux"
 ]

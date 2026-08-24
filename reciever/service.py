@@ -49,38 +49,26 @@ SAVER_URL = os.getenv(
 )
 
 MAX_RETRIES = 2
-
 SLOW_THRESHOLD = 2.0
-
 CONSECUTIVE_SLOW_LIMIT = 3
-
 PROBE_INTERVAL = 5
-
-
 DEPENDENCY = "saver"
-
 OPERATION_VALIDATE = "validate"
-
 OPERATION_GET_NOTES = "get_notes"
 
 
 # ============================================================
 # CIRCUIT BREAKER STATES
 # ============================================================
-
 class States(Enum):
-
     CLOSED = "closed"
-
     OPEN = "open"
-
     HALF_OPEN = "half_open"
 
 
 # ============================================================
 # CIRCUIT BREAKER
 # ============================================================
-
 class DependencyState:
 
     def __init__(self):
@@ -230,18 +218,14 @@ class DependencyState:
     # ========================================================
     # PRESSURE
     # ========================================================
-
     def is_under_pressure(self):
-
         with self.lock:
-
             return self.under_pressure
 
 
     # ========================================================
     # PROBE SCHEDULER
     # ========================================================
-
     def should_probe(self):
 
         with self.lock:
@@ -271,13 +255,9 @@ class DependencyState:
     # ========================================================
     # PROBE SUCCESS
     # ========================================================
-
     def probe_succeeded(self):
-
         with self.lock:
-
             self.consecutive_slow = 0
-
             self.under_pressure = False
 
             dependency_under_pressure.labels(
@@ -294,9 +274,7 @@ class DependencyState:
     # ========================================================
 
     def probe_failed(self):
-
         with self.lock:
-
             self.transition(
                 States.OPEN
             )
@@ -307,9 +285,7 @@ class DependencyState:
     # ========================================================
 
     def get_state(self):
-
         with self.lock:
-
             return self.state
 
 
@@ -325,7 +301,6 @@ def probe_dependency():
     print(
         "PROBE: Testing Service B readiness..."
     )
-
     start = time.monotonic()
 
     dependency_probes_total.labels(
@@ -337,7 +312,6 @@ def probe_dependency():
     ).inc()
 
     try:
-
         response = requests.get(
             f"{SAVER_URL}/readiness",
             timeout=10,
@@ -390,7 +364,6 @@ def probe_dependency():
 
         return False
 
-
     except (
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
@@ -426,7 +399,6 @@ def probe_dependency():
 # ============================================================
 
 def submit_note(data):
-
     timeout = data.get(
         "timeout",
         10,
@@ -448,7 +420,6 @@ def submit_note(data):
         )
 
         start = time.monotonic()
-
         dependency_requests_total.labels(
             dependency=DEPENDENCY,
             operation=OPERATION_VALIDATE,
@@ -675,3 +646,39 @@ def get_all_notes():
         ).inc()
 
         raise
+
+def create_conn_error():
+    start = time.monotonic()
+    dependency_requests_total.labels(
+        dependency=DEPENDENCY,
+        operation=OPERATION_GET_NOTES,
+    ).inc()
+
+    try:
+        if SAVER_URL:
+            #print(f"Saver Url: {SAVER_URL}")
+            a, b = SAVER_URL.rsplit(":", 1)
+        else:
+            a = "http://localhost"
+        URL = f"{a}:5994"
+        response = requests.get(url=URL, timeout=3)
+    except requests.exceptions.ConnectionError:
+        duration = (
+            time.monotonic() - start
+        )
+        dependency_request_duration_seconds.labels(
+            dependency=DEPENDENCY,
+            operation=OPERATION_GET_NOTES,
+        ).observe(duration)
+
+        dependency_connections_errors_total.labels(
+            dependency=DEPENDENCY,
+            operation=OPERATION_GET_NOTES,
+        ).inc()
+
+        dependency_errors_total.labels(
+            dependency=DEPENDENCY,
+            operation=OPERATION_GET_NOTES,
+        ).inc()
+        raise
+

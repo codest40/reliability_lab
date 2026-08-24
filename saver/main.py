@@ -13,10 +13,7 @@ DATA_FILE = os.getenv(
 )
 
 
-# ============================================================
 # DATA OPERATIONS
-# ============================================================
-
 def load_words():
 
     if not os.path.exists(DATA_FILE):
@@ -45,10 +42,7 @@ def save_words(words):
         )
 
 
-# ============================================================
 # WORD VALIDATION
-# ============================================================
-
 def is_english_word(word):
 
     english_words = {
@@ -69,7 +63,7 @@ def is_english_word(word):
         "engineering",
         "platform",
         "monitoring",
-        "observability",
+        "linux",
         "security",
         "infrastructure",
     }
@@ -80,6 +74,13 @@ def is_english_word(word):
 # ============================================================
 # HEALTH
 # ============================================================
+@app.get("/")
+def root():
+    return "SAVER SERVICE ONLINE"
+
+@app.get("/favicon.ico")
+def favicon():
+    return
 
 @app.get("/health")
 def health():
