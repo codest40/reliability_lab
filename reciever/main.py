@@ -4,11 +4,25 @@ from threading import Thread
 import time
 
 import requests
-from flask import ( Flask, request, jsonify )
-from prometheus_client import ( generate_latest, CONTENT_TYPE_LATEST )
+from flask import (
+    Flask,
+    request,
+    jsonify,
+    g,
+)
+from prometheus_client import (
+    generate_latest,
+    CONTENT_TYPE_LATEST,
+)
 
-from service import ( submit_note, get_all_notes, dependency_state,
-                     probe_dependency, States, create_conn_error )
+from service import (
+    submit_note,
+    get_all_notes,
+    dependency_state,
+    probe_dependency,
+    States,
+    create_conn_error,
+)
 
 from metrics import (
     REGISTRY,
@@ -30,6 +44,7 @@ from metrics import (
     queue_capacity,
     queue_utilization,
     queue_rejections_total,
+    queue_wait_duration_seconds,
 
     # Bulkhead
     bulkhead_capacity,
@@ -43,13 +58,17 @@ from metrics import (
     notes_processed_total,
 )
 
+
 app = Flask(__name__)
+
 
 # ============================================================
 # BULKHEAD CONFIGURATION
 # ============================================================
+
 NOTES_WORKERS = 4
 ALL_NOTES_WORKERS = 1
+
 NOTES_QUEUE_SIZE = 10
 ALL_NOTES_QUEUE_SIZE = 10
 
@@ -140,8 +159,106 @@ bulkhead_active_requests.labels(
 
 
 # ============================================================
+# GLOBAL HTTP OBSERVABILITY
+@app.before_request
+def observe_http_request_start():
+
+    g.http_request_start = time.monotonic()
+
+    g.http_method = request.method
+    g.http_endpoint = request.path
+
+    http_requests_total.labels(
+        method=request.method,
+        endpoint=request.path,
+    ).inc()
+
+    http_requests_in_progress.labels(
+        method=request.method,
+        endpoint=request.path,
+    ).inc()
+
+
+@app.after_request
+def observe_http_request_end(response):
+
+    method = getattr(
+        g,
+        "http_method",
+        request.method,
+    )
+
+    endpoint = getattr(
+        g,
+        "http_endpoint",
+        request.path,
+    )
+
+    request_start = getattr(
+        g,
+        "http_request_start",
+        None,
+    )
+
+    # --------------------------------------------------------
+    # Record final HTTP response
+    # --------------------------------------------------------
+
+    http_responses_total.labels(
+        method=method,
+        endpoint=endpoint,
+        status=str(response.status_code),
+    ).inc()
+
+    # --------------------------------------------------------
+    # Service error metric
+    #
+    # Only 5xx responses are considered service failures.
+    #
+    # 4xx responses remain visible through
+    # http_responses_total but do not consume the
+    # service availability error budget.
+    # --------------------------------------------------------
+
+    if response.status_code >= 500:
+
+        http_requests_errors_total.labels(
+            method=method,
+            endpoint=endpoint,
+        ).inc()
+
+    # --------------------------------------------------------
+    # Request duration
+    # --------------------------------------------------------
+
+    if request_start is not None:
+
+        duration = (
+            time.monotonic()
+            - request_start
+        )
+
+        http_request_duration_seconds.labels(
+            method=method,
+            endpoint=endpoint,
+        ).observe(duration)
+
+    # --------------------------------------------------------
+    # In-progress requests
+    # --------------------------------------------------------
+
+    http_requests_in_progress.labels(
+        method=method,
+        endpoint=endpoint,
+    ).dec()
+
+    return response
+
+
+# ============================================================
 # QUEUE METRIC HELPER
 # ============================================================
+
 def update_queue_metrics(
     queue,
     queue_name,
@@ -180,10 +297,6 @@ def worker(
         queue_wait = (
             time.monotonic()
             - queued_at
-        )
-
-        from metrics import (
-            queue_wait_duration_seconds
         )
 
         queue_wait_duration_seconds.labels(
@@ -299,23 +412,6 @@ Thread(
 
 
 # ============================================================
-# HTTP RESPONSE HELPER
-# ============================================================
-
-def record_response(
-    method,
-    endpoint,
-    status,
-):
-
-    http_responses_total.labels(
-        method=method,
-        endpoint=endpoint,
-        status=str(status),
-    ).inc()
-
-
-# ============================================================
 # METRICS ENDPOINT
 # ============================================================
 
@@ -338,6 +434,7 @@ def metrics():
 
 @app.get("/")
 def root():
+
     return "WELCOME TO RECIEVER SERVICE"
 
 
@@ -367,34 +464,11 @@ def notes():
 
     endpoint = "/notes"
 
-    request_start = time.monotonic()
-
-    http_requests_total.labels(
-        method="POST",
-        endpoint=endpoint,
-    ).inc()
-
-    http_requests_in_progress.labels(
-        method="POST",
-        endpoint=endpoint,
-    ).inc()
-
     try:
 
         data = request.get_json()
 
         if not data:
-
-            http_requests_errors_total.labels(
-                method="POST",
-                endpoint=endpoint,
-            ).inc()
-
-            record_response(
-                "POST",
-                endpoint,
-                400,
-            )
 
             return jsonify({
                 "error": "word is required",
@@ -414,17 +488,6 @@ def notes():
                 dependency="saver"
             ).inc()
 
-            http_requests_errors_total.labels(
-                method="POST",
-                endpoint=endpoint,
-            ).inc()
-
-            record_response(
-                "POST",
-                endpoint,
-                503,
-            )
-
             return jsonify({
                 "error":
                     "Service B is unavailable",
@@ -440,17 +503,6 @@ def notes():
             circuit_breaker_rejections_total.labels(
                 dependency="saver"
             ).inc()
-
-            http_requests_errors_total.labels(
-                method="POST",
-                endpoint=endpoint,
-            ).inc()
-
-            record_response(
-                "POST",
-                endpoint,
-                503,
-            )
 
             return jsonify({
                 "error":
@@ -496,17 +548,6 @@ def notes():
                 bulkhead="notes"
             ).inc()
 
-            http_requests_errors_total.labels(
-                method="POST",
-                endpoint=endpoint,
-            ).inc()
-
-            record_response(
-                "POST",
-                endpoint,
-                503,
-            )
-
             return jsonify({
                 "error":
                     "Service A is overloaded",
@@ -523,36 +564,12 @@ def notes():
 
         notes_processed_total.inc()
 
-        record_response(
-            "POST",
-            endpoint,
-            response.status_code,
-        )
-
-        if response.status_code >= 400:
-
-            http_requests_errors_total.labels(
-                method="POST",
-                endpoint=endpoint,
-            ).inc()
-
         return jsonify(
             response.json()
         ), response.status_code
 
 
     except requests.exceptions.Timeout:
-
-        http_requests_errors_total.labels(
-            method="POST",
-            endpoint=endpoint,
-        ).inc()
-
-        record_response(
-            "POST",
-            endpoint,
-            504,
-        )
 
         return jsonify({
             "source":
@@ -564,17 +581,6 @@ def notes():
 
     except requests.exceptions.ConnectionError:
 
-        http_requests_errors_total.labels(
-            method="POST",
-            endpoint=endpoint,
-        ).inc()
-
-        record_response(
-            "POST",
-            endpoint,
-            503,
-        )
-
         return jsonify({
             "source":
                 "reciever",
@@ -585,17 +591,6 @@ def notes():
 
     except Exception as error:
 
-        http_requests_errors_total.labels(
-            method="POST",
-            endpoint=endpoint,
-        ).inc()
-
-        record_response(
-            "POST",
-            endpoint,
-            500,
-        )
-
         return jsonify({
             "source":
                 "reciever",
@@ -604,44 +599,12 @@ def notes():
         }), 500
 
 
-    finally:
-
-        duration = (
-            time.monotonic()
-            - request_start
-        )
-
-        http_request_duration_seconds.labels(
-            method="POST",
-            endpoint=endpoint,
-        ).observe(duration)
-
-        http_requests_in_progress.labels(
-            method="POST",
-            endpoint=endpoint,
-        ).dec()
-
-
 # ============================================================
 # GET /all_notes
 # ============================================================
 
 @app.get("/all_notes")
 def all_notes():
-
-    endpoint = "/all_notes"
-
-    request_start = time.monotonic()
-
-    http_requests_total.labels(
-        method="GET",
-        endpoint=endpoint,
-    ).inc()
-
-    http_requests_in_progress.labels(
-        method="GET",
-        endpoint=endpoint,
-    ).inc()
 
     try:
 
@@ -676,17 +639,6 @@ def all_notes():
                 bulkhead="all_notes"
             ).inc()
 
-            http_requests_errors_total.labels(
-                method="GET",
-                endpoint=endpoint,
-            ).inc()
-
-            record_response(
-                "GET",
-                endpoint,
-                503,
-            )
-
             return jsonify({
                 "error":
                     "Service A is overloaded",
@@ -697,36 +649,12 @@ def all_notes():
 
         response = future.result()
 
-        record_response(
-            "GET",
-            endpoint,
-            response.status_code,
-        )
-
-        if response.status_code >= 400:
-
-            http_requests_errors_total.labels(
-                method="GET",
-                endpoint=endpoint,
-            ).inc()
-
         return jsonify(
             response.json()
         ), response.status_code
 
 
     except requests.exceptions.Timeout:
-
-        http_requests_errors_total.labels(
-            method="GET",
-            endpoint=endpoint,
-        ).inc()
-
-        record_response(
-            "GET",
-            endpoint,
-            504,
-        )
 
         return jsonify({
             "source":
@@ -738,17 +666,6 @@ def all_notes():
 
     except requests.exceptions.ConnectionError:
 
-        http_requests_errors_total.labels(
-            method="GET",
-            endpoint=endpoint,
-        ).inc()
-
-        record_response(
-            "GET",
-            endpoint,
-            503,
-        )
-
         return jsonify({
             "source":
                 "reciever",
@@ -759,17 +676,6 @@ def all_notes():
 
     except Exception as error:
 
-        http_requests_errors_total.labels(
-            method="GET",
-            endpoint=endpoint,
-        ).inc()
-
-        record_response(
-            "GET",
-            endpoint,
-            500,
-        )
-
         return jsonify({
             "source":
                 "reciever",
@@ -778,32 +684,23 @@ def all_notes():
         }), 500
 
 
-    finally:
-
-        duration = (
-            time.monotonic()
-            - request_start
-        )
-
-        http_request_duration_seconds.labels(
-            method="GET",
-            endpoint=endpoint,
-        ).observe(duration)
-
-        http_requests_in_progress.labels(
-            method="GET",
-            endpoint=endpoint,
-        ).dec()
+# ============================================================
+# CONNECTION ERROR EXPERIMENT
+# ============================================================
 
 @app.get("/conn_error")
 def conn_error():
-  create_conn_error()
+    create_conn_error()
+
 
 # ============================================================
 # START SERVICE
+# ============================================================
+
 if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
         port=5000,
     )
+

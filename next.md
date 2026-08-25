@@ -12,12 +12,3 @@ Use the resulting data to demonstrate the reliability story
 Then interview
 ```
 
-##
-Availability SLI
-    = successful requests / total requests
-
-Error Rate
-    = failed requests / total requests
-
-Therefore:
-Availability SLI + Error Rate = 100%

@@ -2,7 +2,6 @@ import os
 import time
 import threading
 from enum import Enum
-
 import requests
 
 from metrics import (
@@ -655,8 +654,11 @@ def create_conn_error():
     ).inc()
 
     try:
+        print(f"Got to create_conn_error() PART!!!! [Normal]")
+        print(f"Saver Url: {SAVER_URL}")
+        print("Got to create_conn_error() PART!!!! [flush]", flush=True)
+        print(f"Saver Url: {SAVER_URL}", flush=True)
         if SAVER_URL:
-            #print(f"Saver Url: {SAVER_URL}")
             a, b = SAVER_URL.rsplit(":", 1)
         else:
             a = "http://localhost"

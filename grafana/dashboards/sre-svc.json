@@ -7,7 +7,6 @@
   "graphTooltip": 1,
   "links": [],
   "panels": [
-
     {
       "type": "row",
       "title": "SERVICE LEVEL OVERVIEW",
@@ -22,20 +21,47 @@
     },
 
     {
-      "id": 1,
+      "id": 29,
       "type": "stat",
-      "title": "Availability SLI",
+      "title": "Total SLI HTTP Requests",
       "gridPos": {
         "h": 6,
-        "w": 6,
+        "w": 8,
         "x": 0,
         "y": 1
       },
       "targets": [
         {
-         "expr": "100 * sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\",status=~\"2..|4..\"}[30m])) / sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\"}[30m]))",
-         "legendFormat": "Availability",
-         "refId": "A"
+          "expr": "sum(increase(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"2..|3..|5..\"}[30m]))",
+          "legendFormat": "SLI Requests",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Availability SLI",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "100 * sum(increase(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"2..|3..\"}[30m])) / clamp_min(sum(increase(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"2..|3..|5..\"}[30m])), 0.000001)",
+          "legendFormat": "Availability",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
@@ -63,14 +89,119 @@
     },
 
     {
+      "id": 4,
+      "type": "stat",
+      "title": "Current 5xx Error Rate",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "100 * sum(increase(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"5..\"}[30m])) / clamp_min(sum(increase(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"2..|3..|5..\"}[30m])), 0.000001)",
+          "legendFormat": "5xx Errors",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 3,
+          "noValue": "N/A"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "type": "row",
+      "title": "ERROR BUDGET AND BURN",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "collapsed": false,
+      "panels": []
+    },
+
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Budget Exhaustion Status",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - ((sum(increase(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"5..\"}[30m])) / clamp_min(sum(increase(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"2..|3..|5..\"}[30m])), 0.000001)) / (1 - 0.999)))",
+          "legendFormat": "Budget Remaining",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(increase(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"5..\"}[30m])) / clamp_min(sum(increase(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"2..|3..|5..\"}[30m])), 0.000001)",
+          "legendFormat": "Status Ratio",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 4,
+          "noValue": "N/A"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Budget Remaining"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx Ratio"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
       "id": 2,
       "type": "stat",
       "title": "Availability SLO",
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 6,
         "x": 6,
-        "y": 1
+        "y": 8
       },
       "targets": [
         {
@@ -89,59 +220,59 @@
     },
 
     {
-      "id": 3,
-      "type": "stat",
-      "title": "Error Budget Remaining",
+      "id": 12,
+      "type": "timeseries",
+      "title": "Error Budget Consumption",
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 6,
         "x": 12,
-        "y": 1
+        "y": 8
       },
       "targets": [
         {
-          "expr": "100 * (1 - ((sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\",status=~\"5..\"}[30m])) / sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\"}[30m]))) / (1 - 0.999)))",
-          "legendFormat": "Budget Remaining",
+          "expr": "100 * ((sum(rate(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"5..\"}[5m])) / clamp_min(sum(rate(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"2..|3..|5..\"}[5m])), 0.000001)) / (1 - 0.999))",
+          "legendFormat": "Budget Consumed %",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
-          "decimals": 2,
-          "noValue": "N/A"
+          "unit": "percent"
         },
         "overrides": []
       }
     },
 
     {
-      "id": 4,
-      "type": "stat",
-      "title": "Current Error Rate",
+      "id": 13,
+      "type": "timeseries",
+      "title": "Error Budget Burn Rate",
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 6,
         "x": 18,
-        "y": 1
+        "y": 8
       },
       "targets": [
         {
-          "expr": "100 * sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\",status=~\"5..\"}[30m])) / sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\"}[30m]))",
-          "legendFormat": "Errors",
+          "expr": "(sum(rate(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"5..\"}[5m])) / clamp_min(sum(rate(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"2..|3..|5..\"}[5m])), 0.000001)) / (1 - 0.999)",
+          "legendFormat": "5m burn rate",
           "refId": "A"
+        },
+        {
+          "expr": "(sum(rate(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"5..\"}[1h])) / clamp_min(sum(rate(http_responses_total{endpoint=~\"/|/notes|/all_notes|/conn_error\",status=~\"2..|3..|5..\"}[1h])), 0.000001)) / (1 - 0.999)",
+          "legendFormat": "1h burn rate",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
-          "decimals": 3,
-          "noValue": "N/A"
+          "unit": "short"
         },
         "overrides": []
       }
     },
-
 
     {
       "type": "row",
@@ -150,7 +281,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 7
+        "y": 16
       },
       "collapsed": false,
       "panels": []
@@ -164,7 +295,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 17
       },
       "targets": [
         {
@@ -184,12 +315,12 @@
     {
       "id": 6,
       "type": "timeseries",
-      "title": "Error Rate %",
+      "title": "HTTP Error Rate %",
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 17
       },
       "targets": [
         {
@@ -206,7 +337,6 @@
       }
     },
 
-
     {
       "type": "row",
       "title": "LATENCY SLI",
@@ -214,7 +344,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 25
       },
       "collapsed": false,
       "panels": []
@@ -228,11 +358,11 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 17
+        "y": 26
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{endpoint=~\"/|/notes|/all_notes|/conn_error\"}[5m])))",
           "legendFormat": "p95",
           "refId": "A"
         }
@@ -253,11 +383,11 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 17
+        "y": 26
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{endpoint=~\"/|/notes|/all_notes|/conn_error\"}[5m])))",
           "legendFormat": "p99",
           "refId": "A"
         }
@@ -278,11 +408,11 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 25
+        "y": 34
       },
       "targets": [
         {
-          "expr": "100 * sum(rate(http_request_duration_seconds_bucket{le=\"2\"}[30m])) / clamp_min(sum(rate(http_request_duration_seconds_count[30m])), 0.000001)",
+          "expr": "100 * sum(rate(http_request_duration_seconds_bucket{endpoint=~\"/|/notes|/all_notes|/conn_error\",le=\"2\"}[30m])) / clamp_min(sum(rate(http_request_duration_seconds_count{endpoint=~\"/|/notes|/all_notes|/conn_error\"}[30m])), 0.000001)",
           "legendFormat": "< 2s",
           "refId": "A"
         }
@@ -304,7 +434,7 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 25
+        "y": 34
       },
       "targets": [
         {
@@ -330,11 +460,11 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 25
+        "y": 34
       },
       "targets": [
         {
-          "expr": "100 * (1 - ((1 - (sum(rate(http_request_duration_seconds_bucket{le=\"2\"}[30m])) / clamp_min(sum(rate(http_request_duration_seconds_count[30m])), 0.000001))) / (1 - 0.99)))",
+          "expr": "100 * (1 - ((1 - (sum(rate(http_request_duration_seconds_bucket{endpoint=~\"/|/notes|/all_notes|/conn_error\",le=\"2\"}[30m])) / clamp_min(sum(rate(http_request_duration_seconds_count{endpoint=~\"/|/notes|/all_notes|/conn_error\"}[30m])), 0.000001))) / (1 - 0.99)))",
           "legendFormat": "Budget Remaining",
           "refId": "A"
         }
@@ -347,76 +477,6 @@
         "overrides": []
       }
     },
-
-
-    {
-      "type": "row",
-      "title": "ERROR BUDGET AND BURN",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 31
-      },
-      "collapsed": false,
-      "panels": []
-    },
-
-    {
-      "id": 12,
-      "type": "timeseries",
-      "title": "Error Budget Consumption",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 32
-      },
-      "targets": [
-        {
-          "expr": "100 * ((sum(rate(http_requests_errors_total[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.000001)) / (1 - 0.999))",
-          "legendFormat": "Budget Consumed %",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent"
-        },
-        "overrides": []
-      }
-    },
-
-    {
-      "id": 13,
-      "type": "timeseries",
-      "title": "Error Budget Burn Rate",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 32
-      },
-      "targets": [
-        {
-          "expr": "(sum(rate(http_requests_errors_total[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.000001)) / (1 - 0.999)",
-          "legendFormat": "5m burn rate",
-          "refId": "A"
-        },
-        {
-          "expr": "(sum(rate(http_requests_errors_total[1h])) / clamp_min(sum(rate(http_requests_total[1h])), 0.000001)) / (1 - 0.999)",
-          "legendFormat": "1h burn rate",
-          "refId": "B"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      }
-    },
-
 
     {
       "type": "row",
@@ -506,7 +566,6 @@
       }
     },
 
-
     {
       "type": "row",
       "title": "DEPENDENCY FAILURE MODES",
@@ -594,7 +653,6 @@
         "overrides": []
       }
     },
-
 
     {
       "type": "row",
@@ -751,7 +809,6 @@
       }
     },
 
-
     {
       "type": "row",
       "title": "RETRY IMPACT",
@@ -840,7 +897,6 @@
       }
     },
 
-
     {
       "type": "row",
       "title": "SLO INTERPRETATION",
@@ -860,7 +916,7 @@
       "title": "Availability Error Budget",
       "gridPos": {
         "h": 6,
-        "w": 8,
+        "w": 12,
         "x": 0,
         "y": 75
       },
@@ -886,8 +942,8 @@
       "title": "Latency Error Budget",
       "gridPos": {
         "h": 6,
-        "w": 8,
-        "x": 8,
+        "w": 12,
+        "x": 12,
         "y": 75
       },
       "targets": [
@@ -907,19 +963,140 @@
     },
 
     {
-      "id": 29,
+      "type": "row",
+      "title": "TOTAL HTTP TRAFFIC",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 82
+      },
+      "collapsed": false,
+      "panels": []
+    },
+
+    {
+      "id": 30,
       "type": "stat",
-      "title": "Requests Processed",
+      "title": "Total HTTP Requests",
       "gridPos": {
         "h": 6,
-        "w": 8,
-        "x": 16,
-        "y": 75
+        "w": 6,
+        "x": 0,
+        "y": 83
       },
       "targets": [
         {
-          "expr": "sum(increase(http_responses_total{method=\"POST\",endpoint=\"/notes\"}[30m]))",
-          "legendFormat": "Requests",
+          "expr": "sum(increase(http_responses_total[$__range]))",
+          "legendFormat": "All HTTP",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 31,
+      "type": "stat",
+      "title": "2xx Successful",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 83
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(http_responses_total{status=~\"2..\"}[$__range]))",
+          "legendFormat": "2xx",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 32,
+      "type": "stat",
+      "title": "3xx Redirect",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 83
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(http_responses_total{status=~\"3..\"}[$__range]))",
+          "legendFormat": "3xx",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "4xx Client Errors",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 83
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(http_responses_total{status=~\"4..\"}[$__range]))",
+          "legendFormat": "4xx",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0"
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 34,
+      "type": "stat",
+      "title": "5xx Server Errors",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 89
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(http_responses_total{status=~\"5..\"}[$__range]))",
+          "legendFormat": "5xx",
           "refId": "A"
         }
       ],
@@ -932,7 +1109,6 @@
         "overrides": []
       }
     }
-
   ],
 
   "refresh": "5s",
@@ -940,13 +1116,12 @@
   "schemaVersion": 39,
 
   "tags": [
-    "sre",
     "service-level",
     "sli",
     "slo",
+    "sla",
     "error-budget",
-    "prometheus",
-    "grafana"
+    "error-rate"
   ],
 
   "templating": {
@@ -960,5 +1135,6 @@
 
   "title": "SRE Service Level",
   "uid": "sre-service-level",
-  "version": 1
+  "version": 2
 }
+

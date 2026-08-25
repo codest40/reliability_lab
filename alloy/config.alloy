@@ -8,7 +8,7 @@ loki.source.docker "containers" {
   targets = discovery.docker.containers.targets
 
   labels = {
-    platform = "sre-reliability-lab"
+    platform = "sre-reliability-lab",
   }
 
   forward_to = [loki.write.loki.receiver]

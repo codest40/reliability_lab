@@ -128,13 +128,14 @@
       "collapsed": false,
       "panels": []
     },
+
     {
       "id": 5,
       "type": "timeseries",
       "title": "Queue Depth",
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 18
       },
@@ -158,8 +159,8 @@
       "title": "Queue Utilization",
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 8,
         "y": 18
       },
       "targets": [
@@ -182,9 +183,9 @@
       "title": "Workers Busy",
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 26
+        "w": 8,
+        "x": 16,
+        "y": 18
       },
       "targets": [
         {
@@ -200,14 +201,15 @@
         "overrides": []
       }
     },
+
     {
       "id": 8,
       "type": "timeseries",
       "title": "Workers Available",
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 0,
         "y": 26
       },
       "targets": [
@@ -230,8 +232,8 @@
       "title": "Queue Rejection Rate",
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 0,
+        "w": 8,
+        "x": 8,
         "y": 26
       },
       "targets": [
@@ -253,9 +255,9 @@
       "type": "stat",
       "title": "Queue Rejections — Total",
       "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 12,
+        "h": 8,
+        "w": 8,
+        "x": 16,
         "y": 26
       },
       "targets": [
@@ -273,13 +275,14 @@
         "overrides": []
       }
     },
+
     {
       "id": 32,
       "type": "timeseries",
       "title": "Queue Wait p95",
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 34
       },
@@ -303,8 +306,8 @@
       "title": "Queue Wait p99",
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 8,
         "y": 34
       },
       "targets": [
@@ -329,20 +332,21 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 42
       },
       "collapsed": false,
       "panels": []
     },
+
     {
       "id": 9,
       "type": "timeseries",
       "title": "Dependency Request Rate",
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 35
+        "y": 43
       },
       "targets": [
         {
@@ -364,9 +368,9 @@
       "title": "Dependency p95 Latency",
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 35
+        "w": 8,
+        "x": 8,
+        "y": 43
       },
       "targets": [
         {
@@ -389,7 +393,7 @@
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 0,
+        "x": 16,
         "y": 43
       },
       "targets": [
@@ -413,8 +417,8 @@
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 8,
-        "y": 43
+        "x": 0,
+        "y": 51
       },
       "targets": [
         {
@@ -437,8 +441,8 @@
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 16,
-        "y": 43
+        "x": 8,
+        "y": 51
       },
       "targets": [
         {
@@ -462,7 +466,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 59
       },
       "collapsed": false,
       "panels": []
@@ -475,7 +479,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 52
+        "y": 60
       },
       "targets": [
         {
@@ -499,7 +503,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 52
+        "y": 60
       },
       "targets": [
         {
@@ -523,7 +527,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 60
+        "y": 68
       },
       "targets": [
         {
@@ -547,7 +551,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 60
+        "y": 68
       },
       "targets": [
         {
@@ -571,7 +575,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 76
       },
       "collapsed": false,
       "panels": []
@@ -584,7 +588,7 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 69
+        "y": 77
       },
       "targets": [
         {
@@ -624,7 +628,7 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 69
+        "y": 77
       },
       "targets": [
         {
@@ -648,7 +652,7 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 69
+        "y": 77
       },
       "targets": [
         {
@@ -672,7 +676,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 75
+        "y": 83
       },
       "collapsed": false,
       "panels": []
@@ -685,7 +689,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 76
+        "y": 84
       },
       "targets": [
         {
@@ -709,7 +713,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 76
+        "y": 84
       },
       "targets": [
         {
@@ -733,7 +737,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 76
+        "y": 84
       },
       "targets": [
         {
@@ -757,7 +761,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 84
+        "y": 92
       },
       "collapsed": false,
       "panels": []
@@ -770,7 +774,7 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 85
+        "y": 93
       },
       "targets": [
         {
@@ -807,7 +811,7 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 85
+        "y": 93
       },
       "targets": [
         {
@@ -844,7 +848,7 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 85
+        "y": 93
       },
       "targets": [
         {
@@ -868,7 +872,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 91
+        "y": 100
       },
       "collapsed": false,
       "panels": []
@@ -881,7 +885,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 92
+        "y": 101
       },
       "targets": [
         {
@@ -905,7 +909,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 92
+        "y": 101
       },
       "targets": [
         {
@@ -929,7 +933,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 92
+        "y": 101
       },
       "targets": [
         {

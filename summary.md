@@ -53,29 +53,20 @@ The current implementation provides enough data to derive several important SRE 
 
 ---
 
-# 3. What We Can Derive From the Metrics
-
-The important point is that the metrics are not isolated measurements.
-
-They can be combined to explain system behavior.
-
-## Latency
-
-```text
-HTTP request duration
-        |
-        +── Queue wait
-        |
-        +── Worker processing
-        |
-        +── Dependency wait
-        |
-        +── Response
-
-This allows us to distinguish:
-
-client-visible latency
-queue latency
-dependency latency
-processing latency
+## Check Grafana for:
+  - Total HTTP traffic
+  - 2xx / 3xx / 4xx / 5xx
+  - Availability SLI
+  - Error budget burn
+  - Request rate
+  - HTTP latency p95 / p99
+  - Queue utilization
+  - Queue rejections
+  - Queue wait p95 / p99
+  - Bulkhead activity
+  - Circuit breaker state/rejections
+  - Dependency errors
+  - Dependency timeouts
+  - Dependency connection errors
+  - Retry activity
 

@@ -4,7 +4,7 @@ echo "STARTING...."
 
 
 usage() {
-    echo "USAGE: ./start cache|no-cache|clean" && exit 1
+    echo "USAGE: $0 cache|no-cache|clean" && exit 1
 }
 
 start() {

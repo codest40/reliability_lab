@@ -80,7 +80,9 @@ def root():
 
 @app.get("/favicon.ico")
 def favicon():
-    return
+    return jsonify({
+        "service": "saver",
+    }), 200
 
 @app.get("/health")
 def health():
