@@ -16,12 +16,8 @@ from prometheus_client import (
 )
 
 from service import (
-    submit_note,
-    get_all_notes,
-    dependency_state,
-    probe_dependency,
-    States,
-    create_conn_error,
+    submit_note, get_all_notes, dependency_state, probe_dependency,
+    States, create_conn_error,
 )
 
 from metrics import (
@@ -209,16 +205,6 @@ def observe_http_request_end(response):
         endpoint=endpoint,
         status=str(response.status_code),
     ).inc()
-
-    # --------------------------------------------------------
-    # Service error metric
-    #
-    # Only 5xx responses are considered service failures.
-    #
-    # 4xx responses remain visible through
-    # http_responses_total but do not consume the
-    # service availability error budget.
-    # --------------------------------------------------------
 
     if response.status_code >= 500:
 
@@ -483,7 +469,7 @@ def notes():
         state = dependency_state.get_state()
 
         if state != States.CLOSED:
-
+            print(f"Service B Current state: {state}")
             circuit_breaker_rejections_total.labels(
                 dependency="saver"
             ).inc()
@@ -691,7 +677,6 @@ def all_notes():
 @app.get("/conn_error")
 def conn_error():
     create_conn_error()
-
 
 # ============================================================
 # START SERVICE

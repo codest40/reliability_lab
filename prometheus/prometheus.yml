@@ -2,10 +2,17 @@ global:
   scrape_interval: 5s
   evaluation_interval: 5s
 
-scrape_configs:
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - "alertmanager:9093"
 
+rule_files:
+  - /etc/prometheus/rules/alerts.yml
+
+scrape_configs:
   - job_name: "reciever"
     static_configs:
       - targets:
           - "reciever:5000"
-          #- "localhost:5000"

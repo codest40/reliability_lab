@@ -19,6 +19,11 @@ services:
     volumes:
       - ./saver/data.json:/app/data.json
 
+  notify:
+    build:
+      context: ./notification
+    ports:
+      - "5002:5002"
 
   prometheus:
     image: prom/prometheus
@@ -26,8 +31,18 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
     depends_on:
       - reciever
+
+  alertmanager:
+     image: prom/alertmanager
+     ports:
+      - "9093:9093"
+     volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+     depends_on:
+      - prometheus
 
   loki:
     image: grafana/loki:latest
@@ -40,6 +55,7 @@ services:
       - -config.file=/etc/loki/local-config.yaml
     depends_on:
       - reciever
+      - notify
 
   alloy:
     image: grafana/alloy:latest

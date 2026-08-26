@@ -1,18 +1,21 @@
 #!/bin/bash
 
+set -u
+
 line() {
     echo "===================================================="
 }
 
 echo "BEGINNING....."
-if [[ "$1" == "initialize" ]]; then
-    echo "Sating all containers.."
+
+arg=${1:-}
+if [[ "$arg" == "initialize" ]]; then
+    echo "Starting all containers.."
     bash init.sh no-cache
 fi
 
-echo "Running all Files Concurrently..."
+echo "Preparing concurrent SRE experiments..."
 
-# Check whether Python is available
 if command -v python >/dev/null 2>&1; then
     PYTHON=python
 elif command -v python3 >/dev/null 2>&1; then
@@ -26,31 +29,89 @@ echo "Using Python: $PYTHON"
 echo "Python version: $($PYTHON --version)"
 
 line
+BARRIER_DIR="/tmp/sre-lab-barrier-$$"
+mkdir -p "$BARRIER_DIR"
+
+READY_FILE="$BARRIER_DIR/ready"
+GO_FILE="$BARRIER_DIR/go"
+
+touch "$READY_FILE"
+
+cleanup() {
+    rm -rf "$BARRIER_DIR"
+}
+
+trap cleanup EXIT
+
+echo "Launching experiments..."
 
 $PYTHON send.py all &
-line
+PID1=$!
 
 $PYTHON send.py python &
-line
+PID2=$!
 
 $PYTHON send.py --action slow python &
-line
+PID3=$!
 
 $PYTHON send.py --action timeout python &
-line
+PID4=$!
 
 $PYTHON load.py &
-line
+PID5=$!
 
 bash t.sh &
-line
+PID6=$!
 
 bash t.sh cache &
-line
+PID7=$!
 
 $PYTHON chaos.py --workers 30 &
+PID8=$!
+
 line
 
-wait
+echo "All experiments launched."
+echo "PIDs:"
+echo "  send.py all              -> $PID1"
+echo "  send.py python           -> $PID2"
+echo "  send.py slow             -> $PID3"
+echo "  send.py timeout          -> $PID4"
+echo "  load.py                  -> $PID5"
+echo "  t.sh                     -> $PID6"
+echo "  t.sh cache               -> $PID7"
+echo "  chaos.py                 -> $PID8"
 
-echo "All experiments completed."
+echo
+echo "Waiting for experiment barrier..."
+
+echo "GO" > "$GO_FILE"
+echo
+echo "===================================================="
+echo "ALL EXPERIMENTS RELEASED"
+echo "===================================================="
+
+FAILURES=0
+for PID in \
+    "$PID1" \
+    "$PID2" \
+    "$PID3" \
+    "$PID4" \
+    "$PID5" \
+    "$PID6" \
+    "$PID7" \
+    "$PID8"
+do
+    if wait "$PID"; then
+        echo "PID $PID completed successfully."
+    else
+        echo "PID $PID FAILED."
+        FAILURES=$((FAILURES + 1))
+    fi
+done
+
+line
+
+if [[ "$FAILURES" -eq 0 ]]; then
+    echo "All experiments completed successfully."
+fi

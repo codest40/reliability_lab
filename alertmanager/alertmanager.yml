@@ -1,0 +1,36 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: sre-webhook
+
+  group_by:
+    - alertname
+    - service
+    - severity
+
+  group_wait: 0s
+  group_interval: 1s
+  repeat_interval: 30m
+
+
+  routes:
+    - matchers:
+        - alertname="SREAlertTest"
+      receiver: sre-webhook-test
+      group_wait: 0s
+      group_interval: 1s
+      repeat_interval: 2m
+
+receivers:
+  - name: sre-webhook
+    webhook_configs:
+      - url: http://notify:5002/webhook
+        send_resolved: true
+        timeout: 10s
+
+  - name: sre-webhook-test
+    webhook_configs:
+      - url: http://notify:5002/webhook
+        send_resolved: true
+        timeout: 10s
