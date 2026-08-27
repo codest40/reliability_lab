@@ -1,6 +1,6 @@
 # SRE Reliability Lab
 
-A small distributed system built to demonstrate **Site Reliability Engineering concepts through real failure, saturation, recovery, observability, and alerting scenarios**.
+A small distributed system built to demonstrate some **Site Reliability Engineering concepts through real failure, saturation, recovery, observability, and alerting scenarios**.
 The project intentionally keeps the application simple so the focus remains on **system that remains predictable under load and failure, with measurable reliability, controlled degradation, actionable observability, and verified recovery**.
 
 ## Aim
