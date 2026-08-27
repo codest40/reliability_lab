@@ -4,8 +4,7 @@ A small distributed system built to demonstrate **Site Reliability Engineering c
 The project intentionally keeps the application simple so the focus remains on **system that remains predictable under load and failure, with measurable reliability, controlled degradation, actionable observability, and verified recovery**.
 
 ## Aim
-The experiments provide controlled conditions from which reliability behavior can be observed, investigated, and understood.
-
+- The experiments provide controlled conditions from which reliability behavior can be observed, investigated, and understood. The major aim is to intentionally interact with the services in ways that provoke significant and measurable reactions, allowing us to observe how the system behaves under normal operation, load, failure, saturation, and recovery.
     Failure Scenario
            ↓
         Detect

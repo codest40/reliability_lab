@@ -18,13 +18,13 @@ start() {
   if [[ "$arg" == "no-cache" ]]; then
     echo "Building without Cache"
         docker compose build --no-cache
-        docker compose up
+        docker compose up -d
   elif [[ "$arg" == "clean" ]]; then
     echo "Cleaning unused build cache..."
     docker builder prune -af
   elif [[ "$arg" == "cache" ]]; then
     echo "Cache Build"
-    docker compose up --build
+    docker compose up -d --build
   else
     echo "$arg is NOT recognixed"
     usage

@@ -37,15 +37,15 @@ done
 
 if [[ "$INIT" == true ]]; then
     echo "Starting all containers.."
-    bash init.sh no-cache
-
-    INIT_STATUS=$?
-
-    if [[ "$INIT_STATUS" -ne 0 ]]; then
+    bash init.sh no-cache &
+    INIT_PID=$!
+    if wait "$INIT_PID"; then
+        echo "Initialization completed successfully."
+    else
+        INIT_STATUS=$?
         echo "ERROR: Initialization failed."
         exit "$INIT_STATUS"
     fi
-
     echo "Initialization completed successfully."
 fi
 
