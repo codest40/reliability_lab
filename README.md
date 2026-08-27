@@ -25,10 +25,10 @@ The project intentionally keeps the application simple so the focus remains on *
     Client
       |
       v
-    Receiver A
+    Service A (Receiver)
       |
       v
-    Saver B
+    Service B (Saver)
 
             +-------------------+
             |   Observability   |
