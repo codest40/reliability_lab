@@ -2,6 +2,7 @@ import os
 import time
 import threading
 from enum import Enum
+
 import requests
 
 from metrics import (
@@ -18,7 +19,6 @@ from metrics import (
 
     circuit_breaker_state,
     circuit_breaker_transitions_total,
-    circuit_breaker_rejections_total,
     circuit_breaker_open_total,
     circuit_breaker_probe_total,
     circuit_breaker_probe_success_total,
@@ -32,15 +32,10 @@ from metrics import (
     dependency_health,
     dependency_under_pressure,
 
-    notes_processed_total,
     notes_saved_total,
     notes_invalid_total,
 )
 
-
-# ============================================================
-# CONFIGURATION
-# ============================================================
 
 SAVER_URL = os.getenv(
     "SAVER_URL",
@@ -51,35 +46,26 @@ MAX_RETRIES = 2
 SLOW_THRESHOLD = 2.0
 CONSECUTIVE_SLOW_LIMIT = 3
 PROBE_INTERVAL = 5
+
 DEPENDENCY = "saver"
 OPERATION_VALIDATE = "validate"
 OPERATION_GET_NOTES = "get_notes"
 
 
-# ============================================================
-# CIRCUIT BREAKER STATES
-# ============================================================
 class States(Enum):
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
 
 
-# ============================================================
-# CIRCUIT BREAKER
-# ============================================================
 class DependencyState:
 
     def __init__(self):
 
         self.state = States.CLOSED
-
         self.consecutive_slow = 0
-
         self.under_pressure = False
-
         self.last_probe = 0
-
         self.lock = threading.Lock()
 
         circuit_breaker_state.labels(
@@ -94,11 +80,6 @@ class DependencyState:
             dependency=DEPENDENCY
         ).set(0)
 
-
-    # ========================================================
-    # STATE METRIC VALUE
-    # ========================================================
-
     def state_value(self, state):
 
         if state == States.CLOSED:
@@ -108,11 +89,6 @@ class DependencyState:
             return 1
 
         return 2
-
-
-    # ========================================================
-    # STATE TRANSITION
-    # ========================================================
 
     def transition(self, new_state):
 
@@ -157,11 +133,6 @@ class DependencyState:
                 dependency=DEPENDENCY
             ).set(1)
 
-
-    # ========================================================
-    # RECORD DEPENDENCY LATENCY
-    # ========================================================
-
     def record_latency(self, duration):
 
         with self.lock:
@@ -189,17 +160,13 @@ class DependencyState:
                     print("B UNDER PRESSURE")
 
                     if self.state == States.CLOSED:
-
-                        self.transition(
-                            States.OPEN
-                        )
+                        self.transition(States.OPEN)
 
             else:
 
                 self.consecutive_slow = 0
 
                 if self.under_pressure:
-
                     print("B RECOVERED")
 
                 self.under_pressure = False
@@ -209,28 +176,19 @@ class DependencyState:
                 ).set(0)
 
                 print(
-                    f"B latency: {duration:.2f}s | "
-                    "NORMAL"
+                    f"B latency: {duration:.2f}s | NORMAL"
                 )
 
-
-    # ========================================================
-    # PRESSURE
-    # ========================================================
     def is_under_pressure(self):
+
         with self.lock:
             return self.under_pressure
 
-
-    # ========================================================
-    # PROBE SCHEDULER
-    # ========================================================
     def should_probe(self):
 
         with self.lock:
 
             if self.state != States.OPEN:
-
                 return False
 
             now = time.monotonic()
@@ -241,21 +199,16 @@ class DependencyState:
             ):
 
                 self.last_probe = now
-
-                self.transition(
-                    States.HALF_OPEN
-                )
+                self.transition(States.HALF_OPEN)
 
                 return True
 
             return False
 
-
-    # ========================================================
-    # PROBE SUCCESS
-    # ========================================================
     def probe_succeeded(self):
+
         with self.lock:
+
             self.consecutive_slow = 0
             self.under_pressure = False
 
@@ -263,27 +216,15 @@ class DependencyState:
                 dependency=DEPENDENCY
             ).set(0)
 
-            self.transition(
-                States.CLOSED
-            )
-
-
-    # ========================================================
-    # PROBE FAILURE
-    # ========================================================
+            self.transition(States.CLOSED)
 
     def probe_failed(self):
+
         with self.lock:
-            self.transition(
-                States.OPEN
-            )
-
-
-    # ========================================================
-    # CURRENT STATE
-    # ========================================================
+            self.transition(States.OPEN)
 
     def get_state(self):
+
         with self.lock:
             return self.state
 
@@ -291,15 +232,10 @@ class DependencyState:
 dependency_state = DependencyState()
 
 
-# ============================================================
-# DEPENDENCY PROBE
-# ============================================================
-
 def probe_dependency():
 
-    print(
-        "PROBE: Testing Service B readiness..."
-    )
+    print("PROBE: Testing Service B readiness...")
+
     start = time.monotonic()
 
     dependency_probes_total.labels(
@@ -311,23 +247,27 @@ def probe_dependency():
     ).inc()
 
     try:
+
         response = requests.get(
             f"{SAVER_URL}/readiness",
             timeout=10,
         )
 
-        duration = (
-            time.monotonic() - start
-        )
+        duration = time.monotonic() - start
 
         dependency_probe_duration_seconds.labels(
             dependency=DEPENDENCY
         ).observe(duration)
 
-        if (
-            response.ok
-            and duration < SLOW_THRESHOLD
-        ):
+        print(
+            f"PROBE RESULT | "
+            f"status={response.status_code} | "
+            f"time={duration:.2f}s | "
+            f"raw={response.text}",
+            flush=True,
+        )
+
+        if response.ok and duration < SLOW_THRESHOLD:
 
             dependency_probe_success_total.labels(
                 dependency=DEPENDENCY
@@ -368,9 +308,7 @@ def probe_dependency():
         requests.exceptions.ConnectionError,
     ):
 
-        duration = (
-            time.monotonic() - start
-        )
+        duration = time.monotonic() - start
 
         dependency_probe_duration_seconds.labels(
             dependency=DEPENDENCY
@@ -384,20 +322,15 @@ def probe_dependency():
             dependency=DEPENDENCY
         ).inc()
 
-        print(
-            "PROBE: Service B unavailable"
-        )
+        print("PROBE: Service B unavailable")
 
         dependency_state.probe_failed()
 
         return False
 
 
-# ============================================================
-# SUBMIT NOTE
-# ============================================================
-
 def submit_note(data):
+
     timeout = data.get(
         "timeout",
         10,
@@ -414,11 +347,10 @@ def submit_note(data):
             operation=OPERATION_VALIDATE,
         ).inc()
 
-        print(
-            f"Attempt: {attempts}"
-        )
+        print(f"Attempt: {attempts}")
 
         start = time.monotonic()
+
         dependency_requests_total.labels(
             dependency=DEPENDENCY,
             operation=OPERATION_VALIDATE,
@@ -432,35 +364,26 @@ def submit_note(data):
                 timeout=timeout,
             )
 
-            duration = (
-                time.monotonic() - start
-            )
+            duration = time.monotonic() - start
 
             dependency_request_duration_seconds.labels(
                 dependency=DEPENDENCY,
                 operation=OPERATION_VALIDATE,
             ).observe(duration)
 
-            dependency_state.record_latency(
-                duration
-            )
+            dependency_state.record_latency(duration)
 
             if response.status_code == 400:
-
                 notes_invalid_total.inc()
 
             elif response.status_code == 200:
-
                 notes_saved_total.inc()
 
             return response
 
-
         except requests.exceptions.Timeout:
 
-            duration = (
-                time.monotonic() - start
-            )
+            duration = time.monotonic() - start
 
             dependency_request_duration_seconds.labels(
                 dependency=DEPENDENCY,
@@ -477,6 +400,8 @@ def submit_note(data):
                 operation=OPERATION_VALIDATE,
             ).inc()
 
+            dependency_state.record_latency(duration)
+
             if attempts > MAX_RETRIES:
 
                 retry_exhausted_total.labels(
@@ -491,29 +416,20 @@ def submit_note(data):
                 operation=OPERATION_VALIDATE,
             ).inc()
 
-            delay = (
-                0.5
-                if attempts == 1
-                else 1.0
-            )
+            delay = 0.5 if attempts == 1 else 1.0
 
             retry_delay_seconds.labels(
                 dependency=DEPENDENCY,
                 operation=OPERATION_VALIDATE,
             ).observe(delay)
 
-            print(
-                f"Retrying after {delay}s"
-            )
+            print(f"Retrying after {delay}s")
 
             time.sleep(delay)
 
-
         except requests.exceptions.ConnectionError:
 
-            duration = (
-                time.monotonic() - start
-            )
+            duration = time.monotonic() - start
 
             dependency_request_duration_seconds.labels(
                 dependency=DEPENDENCY,
@@ -544,32 +460,21 @@ def submit_note(data):
                 operation=OPERATION_VALIDATE,
             ).inc()
 
-            delay = (
-                0.5
-                if attempts == 1
-                else 1.0
-            )
+            delay = 0.5 if attempts == 1 else 1.0
 
             retry_delay_seconds.labels(
                 dependency=DEPENDENCY,
                 operation=OPERATION_VALIDATE,
             ).observe(delay)
 
-            print(
-                f"Retrying after {delay}s"
-            )
+            print(f"Retrying after {delay}s")
 
             time.sleep(delay)
-
 
     raise RuntimeError(
         "Retry loop ended unexpectedly"
     )
 
-
-# ============================================================
-# GET ALL NOTES
-# ============================================================
 
 def get_all_notes():
 
@@ -587,9 +492,7 @@ def get_all_notes():
             timeout=10,
         )
 
-        duration = (
-            time.monotonic() - start
-        )
+        duration = time.monotonic() - start
 
         dependency_request_duration_seconds.labels(
             dependency=DEPENDENCY,
@@ -598,12 +501,9 @@ def get_all_notes():
 
         return response
 
-
     except requests.exceptions.Timeout:
 
-        duration = (
-            time.monotonic() - start
-        )
+        duration = time.monotonic() - start
 
         dependency_request_duration_seconds.labels(
             dependency=DEPENDENCY,
@@ -622,12 +522,9 @@ def get_all_notes():
 
         raise
 
-
     except requests.exceptions.ConnectionError:
 
-        duration = (
-            time.monotonic() - start
-        )
+        duration = time.monotonic() - start
 
         dependency_request_duration_seconds.labels(
             dependency=DEPENDENCY,
@@ -645,6 +542,7 @@ def get_all_notes():
         ).inc()
 
         raise
+
 
 def create_conn_error():
     start = time.monotonic()
@@ -653,21 +551,27 @@ def create_conn_error():
         operation=OPERATION_GET_NOTES,
     ).inc()
 
+    print("Got to create_conn_error() PART!", flush=True)
     try:
-        print(f"Got to create_conn_error() PART!!!! [Normal]")
-        print(f"Saver Url: {SAVER_URL}")
-        print("Got to create_conn_error() PART!!!! [flush]", flush=True)
-        print(f"Saver Url: {SAVER_URL}", flush=True)
         if SAVER_URL:
-            a, b = SAVER_URL.rsplit(":", 1)
+            base, _ = SAVER_URL.rsplit(":", 1)
         else:
-            a = "http://localhost"
-        URL = f"{a}:5994"
-        response = requests.get(url=URL, timeout=3)
-    except requests.exceptions.ConnectionError:
-        duration = (
-            time.monotonic() - start
+            base = "http://localhost"
+        url = f"{base}:5994"
+        requests.get(
+            url=url,
+            timeout=3,
         )
+
+        return {
+            "status": "unexpected success",
+            "source": "reciever",
+        }
+
+    except requests.exceptions.ConnectionError:
+
+        duration = time.monotonic() - start
+
         dependency_request_duration_seconds.labels(
             dependency=DEPENDENCY,
             operation=OPERATION_GET_NOTES,
@@ -682,6 +586,8 @@ def create_conn_error():
             dependency=DEPENDENCY,
             operation=OPERATION_GET_NOTES,
         ).inc()
-        raise
 
-
+        return {
+            "status": "connection error generated",
+            "source": "reciever",
+        }

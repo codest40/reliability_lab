@@ -18,6 +18,7 @@ services:
       - "5001:5001"
     volumes:
       - ./saver/data.json:/app/data.json
+      - ./saver/readiness.json:/app/readiness.json
 
   notify:
     build:
@@ -56,6 +57,7 @@ services:
     depends_on:
       - reciever
       - notify
+      - saver
 
   alloy:
     image: grafana/alloy:latest
