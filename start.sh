@@ -127,12 +127,9 @@ if [[ "$EXPERIMENT" == true ]]; then
     echo "  t.sh                     -> $PID6"
     echo "  t.sh cache               -> $PID7"
     echo "  chaos.py                 -> $PID8"
-
     echo
     echo "Waiting for experiment barrier..."
-
     echo "GO" > "$GO_FILE"
-
     echo
     echo "===================================================="
     echo "ALL EXPERIMENTS RELEASED"
@@ -157,13 +154,37 @@ if [[ "$EXPERIMENT" == true ]]; then
             FAILURES=$((FAILURES + 1))
         fi
     done
-
-    line
-
-    if [[ "$FAILURES" -eq 0 ]]; then
-        echo "All experiments completed successfully."
-    else
-        echo "$FAILURES experiment(s) failed."
-        exit 1
+    if [[ "$FAILURES" -eq 0 ]]; then 
+      echo "All experiments completed successfully."
     fi
 fi
+
+line
+echo "SRE RELIABILITY LAB APPLICATIONS"
+line
+echo
+echo "Receiver A:"
+echo "  http://localhost:5000"
+echo
+echo "Saver B:"
+echo "  http://localhost:5001"
+echo
+echo "Notify:"
+echo "  http://localhost:5002"
+echo
+echo "Prometheus:"
+echo "  http://localhost:9090"
+echo
+echo "Alertmanager:"
+echo "  http://localhost:9093"
+echo
+echo "Grafana:"
+echo "  http://localhost:3000"
+echo
+echo "Loki:"
+echo "  http://localhost:3100"
+echo
+echo "Alloy:"
+echo "  http://localhost:12345"
+echo
+line

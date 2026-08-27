@@ -42,19 +42,16 @@ The experiments provide controlled conditions from which reliability behavior ca
             +-------------------+
 
 ## Project Documentation
-
 | Document | Purpose |
 |---|---|
 | `docs/architecture.md` | System architecture, services, request flow, and system boundaries |
 | `docs/reliability.md` | Reliability mechanisms including retries, circuit breakers, bulkheads, queues, and protection |
-| `docs/backpressure.md` | Backpressure, queueing, capacity, saturation, and load shedding |
 | `docs/failure-scenarios.md` | Controlled failure experiments, observed behavior, protection, and recovery |
 | `docs/observability.md` | Application, dependency, queue, worker, retry, circuit-breaker, probe, and bulkhead metrics |
 | `docs/monitoring.md` | Prometheus, Grafana, Loki, Alloy, Alertmanager, and notification pipeline |
 | `docs/experiment_flow.md` | End-to-end experiment, observation, investigation, and incident flow |
 
 ## Core SRE Concepts Demonstrated
-
     Capacity
     Backpressure
     Queueing
