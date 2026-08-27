@@ -4,6 +4,15 @@ This document summarizes the reliability concepts implemented and demonstrated i
 
 The goal is to connect the **metrics we collect** with the **reliability concepts we can derive from them**.
 
+| Document               | Its job                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| `architecture.md`      | What components exist and how they communicate                                           |
+| `reliability.md`       | Why the reliability mechanisms exist and how they behave                                 |
+| `backpressure.md`      | Queueing/load-shedding concepts                                                          |
+| `observability.md`     | What each application metric means                                                       |
+| `failure-scenarios.md` | How reliability mechanisms are experimentally tested                                     |
+| **`monitoring.md`**    | **How telemetry is collected, transported, stored, visualized, alerted, and acted upon** |
+
 ---
 
 # 1. Observability Coverage
@@ -69,4 +78,52 @@ The current implementation provides enough data to derive several important SRE 
   - Dependency timeouts
   - Dependency connection errors
   - Retry activity
+
+
+# Summary
+| Area                            | What I've already seen in the project                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Project purpose**             | Tiny SRE Reliability Lab demonstrating reliability engineering through a small Receiver → Saver system       |
+| **Architecture**                | Receiver (Service A) depends on Saver (Service B); Docker Compose deployment                                 |
+| **Request flow**                | Client → Receiver → queue/workers → Saver `/validate`                                                        |
+| **Concurrency**                 | Worker pool, `Queue`, queue capacity, concurrent requests                                                    |
+| **Capacity**                    | 5 workers, queue size 10, throughput limitations                                                             |
+| **Queue behavior**              | Queue buildup, waiting, queue saturation, queue rejection                                                    |
+| **Backpressure**                | Requests rejected when the queue is exhausted                                                                |
+| **Latency**                     | Request latency, queue waiting vs dependency/retry waiting                                                   |
+| **Dependency failures**         | Saver being slow, unavailable, timing out, or returning errors                                               |
+| **Retries**                     | Retry count, retry policy, retryable vs non-retryable failures, retry delays                                 |
+| **Retry amplification**         | How retries can increase dependency pressure                                                                 |
+| **Circuit breaker**             | CLOSED / OPEN / HALF_OPEN states                                                                             |
+| **Circuit-breaker protection**  | Rejecting requests while OPEN                                                                                |
+| **Circuit-breaker recovery**    | Probe → HALF_OPEN → CLOSED                                                                                   |
+| **Circuit-breaker metrics**     | State, transitions, opens, rejections, probes, probe successes/failures                                      |
+| **Dependency probing**          | Existing readiness probe and the current design flaw we just identified                                      |
+| **Partial failure**             | Dependency failure affecting Receiver while Receiver itself remains alive                                    |
+| **Recovery behavior**           | Dependency recovery and circuit-breaker recovery                                                             |
+| **Failure experiments**         | Normal, slow, error and timeout scenarios                                                                    |
+| **Load testing**                | `load.py`, concurrent requests, saturation experiments                                                       |
+| **Chaos testing**               | `chaos.py`, multiple workers / concurrent failure experiments                                                |
+| **Experiment orchestration**    | `start.sh`, concurrent experiment execution                                                                  |
+| **Start barrier**               | We discussed making experiments start together rather than merely launching them asynchronously              |
+| **Prometheus**                  | Scraping Receiver metrics                                                                                    |
+| **Scrape interval**             | 5-second Prometheus scrape interval                                                                          |
+| **Prometheus alert rules**      | `alerts.yml` with HTTP, latency, queue, dependency, circuit-breaker and retry alerts                         |
+| **Alertmanager**                | Routing alerts to the Receiver/notification endpoint                                                         |
+| **Alert grouping**              | `group_by`, `group_wait`, `group_interval`, `repeat_interval`                                                |
+| **Webhook delivery**            | Alertmanager → Receiver/notification webhook                                                                 |
+| **Alert testing**               | Manual Alertmanager API alert injection                                                                      |
+| **Alert delivery debugging**    | DNS resolution, Docker network, Alertmanager configuration, notification metrics                             |
+| **Alert notification metrics**  | `alertmanager_notifications_total`, failed notifications, etc.                                               |
+| **Docker DNS**                  | Docker embedded DNS (`127.0.0.11`) and service-name resolution                                               |
+| **Docker networking**           | `sre_lab_default`, bridge network, container service names/IPs                                               |
+| **Loki**                        | Loki deployed for log aggregation                                                                            |
+| **Grafana Alloy**               | Alloy collecting/forwarding Docker logs                                                                      |
+| **Grafana**                     | SRE Reliability Lab dashboard                                                                                |
+| **Grafana dashboard structure** | SERVICE, CAPACITY/SATURATION, DEPENDENCY, RETRIES, CIRCUIT BREAKER, BULKHEAD, DEPENDENCY HEALTH, APPLICATION |
+| **Prometheus metrics**          | We've discussed a substantial set of application metrics                                                     |
+| **Metric semantics**            | You specifically had me prepare a README-style table explaining the scraped metrics                          |
+| **SRE metrics**                 | MTTD/incident-related concepts were discussed as a final part of the project                                 |
+| **Incident reporting**          | We discussed adding incident reports and reliability measurements                                            |
+| **SLO/error-budget concepts**   | You've already worked with error budget visualization in Grafana                                             |
 
