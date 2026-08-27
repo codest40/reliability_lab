@@ -12,6 +12,11 @@ DATA_FILE = os.getenv(
     "data.json",
 )
 
+READINESS_FILE = os.getenv(
+    "READINESS_FILE",
+    "readiness_action.json",
+)
+
 
 # DATA OPERATIONS
 def load_words():
@@ -37,6 +42,43 @@ def save_words(words):
 
         json.dump(
             words,
+            file,
+            indent=2,
+        )
+
+
+def load_readiness_state():
+
+    if not os.path.exists(READINESS_FILE):
+
+        return {
+            "action": "normal",
+            "completed": True,
+        }
+
+    with open(
+        READINESS_FILE,
+        "r",
+    ) as file:
+
+        return json.load(file)
+
+
+def save_readiness_state(
+    action,
+    completed,
+):
+
+    with open(
+        READINESS_FILE,
+        "w",
+    ) as file:
+
+        json.dump(
+            {
+                "action": action,
+                "completed": completed,
+            },
             file,
             indent=2,
         )
@@ -71,18 +113,19 @@ def is_english_word(word):
     return word.lower() in english_words
 
 
-# ============================================================
 # HEALTH
-# ============================================================
 @app.get("/")
 def root():
     return "SAVER SERVICE ONLINE"
 
+
 @app.get("/favicon.ico")
 def favicon():
+
     return jsonify({
         "service": "saver",
     }), 200
+
 
 @app.get("/health")
 def health():
@@ -93,47 +136,63 @@ def health():
     }), 200
 
 
-# ============================================================
 # FAILURE CONTROL
-# ============================================================
-
 def failure_control(action):
 
     if action == "slow":
-
         time.sleep(4)
 
     elif action == "error":
-
         return 500
 
     elif action == "timeout":
-
         time.sleep(15)
 
 
-# ============================================================
 # READINESS
-# ============================================================
-
 @app.get("/readiness")
 def readiness():
-
     try:
+        state = load_readiness_state()
+        action = state.get(
+            "action",
+            "normal",
+        )
 
-        # This tests the resource required by /validate:
-        # the backing data store.
+        completed = state.get(
+            "completed",
+            False,
+        )
+
+        if not completed:
+            return jsonify({
+                "status": "not_ready",
+                "service": "saver",
+                "action": action,
+                "completed": False,
+                "summary": "B still hanging",
+            }), 503
+
+        result = failure_control(action)
+        if result:
+            return jsonify({
+                "status": "not_ready",
+                "service": "saver",
+                "action": action,
+                "completed": True,
+                "summary": "B Failed",
+            }), 503
 
         load_words()
 
         return jsonify({
             "status": "ready",
             "service": "saver",
+            "action": action,
+            "completed": True,
         }), 200
 
-
     except Exception as error:
-
         return jsonify({
             "status": "not_ready",
             "service": "saver",
@@ -141,26 +200,17 @@ def readiness():
         }), 503
 
 
-# ============================================================
 # VALIDATE NOTE
-# ============================================================
-
 @app.post("/validate")
 def validate_word():
-
     try:
-
         data = request.get_json()
-
     except Exception as error:
-
         return jsonify({
             "msg": str(error),
         }), 500
 
-
     if not data or "word" not in data:
-
         return jsonify({
             "error":
                 "word is required",
@@ -170,24 +220,19 @@ def validate_word():
                 "saver",
         }), 400
 
-
-    # ========================================================
-    # FAILURE SIMULATION
-    # ========================================================
-
     action = data.get(
         "action",
         "normal",
     )
 
+    save_readiness_state(
+        action,
+        False,
+    )
+
     if action != "normal":
-
-        result = failure_control(
-            action
-        )
-
+        result = failure_control(action)
         if result:
-
             return jsonify({
                 "error":
                     "Backend Failure Control",
@@ -199,18 +244,17 @@ def validate_word():
                     "saver",
             }), 500
 
-
-    # ========================================================
-    # VALIDATE WORD
-    # ========================================================
-
     word = data["word"]
-
 
     if not isinstance(
         word,
         str,
     ):
+
+        save_readiness_state(
+            action,
+            True,
+        )
 
         return jsonify({
             "error":
@@ -221,11 +265,14 @@ def validate_word():
                 "saver",
         }), 400
 
-
     word = word.strip()
 
-
     if not word:
+
+        save_readiness_state(
+            action,
+            True,
+        )
 
         return jsonify({
             "error":
@@ -236,8 +283,12 @@ def validate_word():
                 "saver",
         }), 400
 
-
     if not is_english_word(word):
+
+        save_readiness_state(
+            action,
+            True,
+        )
 
         return jsonify({
             "word":
@@ -252,20 +303,16 @@ def validate_word():
                 "saver",
         }), 400
 
-
-    # ========================================================
-    # SAVE
-    # ========================================================
-
     words = load_words()
 
-
     if word not in words:
-
         words.append(word)
-
         save_words(words)
 
+    save_readiness_state(
+        action,
+        True,
+    )
 
     return jsonify({
         "word":
@@ -279,10 +326,7 @@ def validate_word():
     }), 200
 
 
-# ============================================================
 # GET ALL NOTES
-# ============================================================
-
 @app.get("/get_notes")
 def get_words():
 
@@ -296,13 +340,9 @@ def get_words():
     })
 
 
-# ============================================================
 # START SERVICE
-# ============================================================
-
 if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
-        port=5001,
-    )
+        port=5001,)
