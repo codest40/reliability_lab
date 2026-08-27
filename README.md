@@ -5,6 +5,7 @@ The project intentionally keeps the application simple so the focus remains on *
 
 ## Aim
 - The experiments provide controlled conditions from which reliability behavior can be observed, investigated, and understood. The major aim is to intentionally interact with the services in ways that provoke significant and measurable reactions, allowing us to observe how the system behaves under normal operation, load, failure, saturation, and recovery.
+```
     Failure Scenario
            ↓
         Detect
@@ -40,6 +41,7 @@ The project intentionally keeps the application simple so the focus remains on *
             | Notify            |
             +-------------------+
 
+```
 ## Project Documentation
 | Document | Purpose |
 |---|---|
@@ -50,6 +52,7 @@ The project intentionally keeps the application simple so the focus remains on *
 | `docs/monitoring.md` | Prometheus, Grafana, Loki, Alloy, Alertmanager, and notification pipeline |
 | `docs/experiment_flow.md` | End-to-end experiment, observation, investigation, and incident flow |
 
+```
 ## Core SRE Concepts Demonstrated
     Capacity
     Backpressure
@@ -67,6 +70,7 @@ The project intentionally keeps the application simple so the focus remains on *
     Alerting
     Incident Investigation
     Recovery
+```
 
 ## Running the Lab
 | Script | Purpose |
@@ -78,6 +82,7 @@ The project intentionally keeps the application simple so the focus remains on *
 | [`start.sh`](start.sh) | Orchestrate the concurrent experiment suite |
 | [`init.sh`](init.sh) | Initialize and start the lab containers |
 
+```
 ### Common Commands
     # Initialize the lab, then run all experiments
     bash start.sh init experiment
@@ -119,7 +124,7 @@ to:
     triggered load shedding, increased 503 responses,
     and eventually caused the circuit breaker to open."
 - That is the central purpose of the Reliability Lab.
-
+```
 
 ## Summary: What We Learned
 Through these controlled experiments, we learned to:
@@ -137,7 +142,7 @@ Through these controlled experiments, we learned to:
 - Recognize that **observability itself is a dependency** that can fail.
 - Understand that recovery is not complete until the system's **health and behavior have been verified**.
 - Treat reliability as a continuous loop:
-
+```
       Generate Failure
             ↓
          Observe
