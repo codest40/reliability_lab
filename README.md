@@ -118,5 +118,39 @@ to:
     increased queue wait time, filled the bounded queue,
     triggered load shedding, increased 503 responses,
     and eventually caused the circuit breaker to open."
-
 - That is the central purpose of the Reliability Lab.
+
+
+## Summary: What We Learned
+Through these controlled experiments, we learned to:
+
+- Identify how **latency propagates** from a dependency into the calling service.
+- Understand how **queues and worker limits** create backpressure and saturation.
+- See how **retries can amplify load** during dependency failures.
+- Use **timeouts** to prevent requests from waiting indefinitely.
+- Use **circuit breakers** to stop repeatedly calling an unhealthy dependency.
+- Use **bulkheads** to prevent one failure path from consuming all available capacity.
+- Understand **load shedding** as a way to protect an already-saturated system.
+- Distinguish between **errors, timeouts, connection failures, and partial failures**.
+- Use **metrics to detect behavior**, **logs to investigate events**, and **alerts to demand attention**.
+- Correlate application behavior across **Prometheus, Grafana, Loki, Alloy, Alertmanager, and Notify**.
+- Recognize that **observability itself is a dependency** that can fail.
+- Understand that recovery is not complete until the system's **health and behavior have been verified**.
+- Treat reliability as a continuous loop:
+
+      Generate Failure
+            ↓
+         Observe
+            ↓
+         Detect
+            ↓
+        Investigate
+            ↓
+          Protect
+            ↓
+         Recover
+            ↓
+          Verify
+            ↓
+      Learn & Improve
+
